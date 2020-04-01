@@ -1,0 +1,26 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+D:\51\PWM\main.uvproj
+Project File Date:  03/29/2020
+
+<h2>Output:</h2>
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+compiling pwm.c...
+PWM.C(29): error C202: 'PwmH': undefined identifier
+PWM.C(30): error C202: 'PwmperiodCount': undefined identifier
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+compiling pwm.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?DELAYMS?PWM
+Program Size: data=19.0 xdata=0 code=935
+creating hex file from "main"...
+"main" - 0 Error(s), 1 Warning(s).

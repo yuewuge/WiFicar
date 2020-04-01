@@ -1,0 +1,257 @@
+C51 COMPILER V9.00   PWM                                                                   04/01/2020 12:41:20 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE PWM
+OBJECT MODULE PLACED IN pwm.OBJ
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE pwm.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "pwm.h"
+   2          uint pwm=0,Count=0;
+   3          uint Pwmvalue=0;
+   4          uint flag = 0;
+   5          sbit key = P2^1;
+   6          
+   7          void delayms()
+   8          {
+   9   1              uint i,j;
+  10   1              for(i=0;i<2000;i++)
+  11   1              for(j=0;j<2;j++);
+  12   1      }
+  13          
+  14          
+  15          void init ()
+  16          {
+  17   1              TMOD=0X22;  //双定时器都打开工作方式2
+  18   1              SCON=0X50;
+  19   1              TH1=0XFD;    //9600的波特率
+  20   1              TL1=0XFD;
+  21   1              TL0=245;         //1ms定时器
+  22   1              TH0=245;
+  23   1              ET0=1;
+  24   1              TR0=1;
+  25   1              TR1=1;
+  26   1              EA=1;
+  27   1              ES=1;
+  28   1              PS=1;       //串口中断有最高优先级
+  29   1              pwm=0;     //高电平的占空比
+  30   1              Count=0;  //时间计数
+  31   1              
+  32   1      }
+  33           
+  34          void pwmset(uint NewPwmValue)       //设置占空比 （调节PWM）
+  35          {
+  36   1              if((NewPwmValue>=1)&&(NewPwmValue<=99))
+  37   1              {
+  38   2                              pwm=NewPwmValue;
+  39   2              }
+  40   1              else     //新设置的占空比没有意义
+  41   1              {       
+  42   2                              pwm=0x01;   //输出一个脉冲
+  43   2              }
+  44   1      }
+  45           
+  46           
+  47          void pwmproduce() interrupt 1    //定时0的方式二中断
+  48          {
+  49   1              if(flag == 0){   //制动
+  50   2                      PWM_OUT1=0;
+  51   2                      PWM_OUT2=0;                
+  52   2                      PWM_OUT3=0;
+  53   2                      PWM_OUT4=0;
+  54   2              }else if(flag == 1){              //前进
+  55   2                       Count++;           //时间计数 每1ms加一
+C51 COMPILER V9.00   PWM                                                                   04/01/2020 12:41:20 PAGE 2   
+
+  56   2                       PWM_OUT2=0;
+  57   2                       PWM_OUT1=1;
+  58   2                       PWM_OUT4=0;
+  59   2                       PWM_OUT3=1;
+  60   2                      if(Count<=pwm)    //计数时间小于规定占空比
+  61   2                      {
+  62   3                              ENA = 1;
+  63   3                              ENB = 1;
+  64   3                      }
+  65   2                      else                      //到达了规定时间
+  66   2                      {
+  67   3                              ENA = 0;
+  68   3                              ENB = 0;
+  69   3                              if(Count>=100)   //计数值到了100
+  70   3                              {
+  71   4                                              Count=0;     //计数值清零
+  72   4                              }
+  73   3                      }
+  74   2              }else if(flag == 2){                    //后退
+  75   2                       Count++;           //时间计数 每1ms加一
+  76   2                       PWM_OUT1=0;
+  77   2                       PWM_OUT2=1;
+  78   2                       PWM_OUT4=1;
+  79   2                       PWM_OUT3=0;
+  80   2                      if(Count<=pwm)    //计数时间小于规定占空比
+  81   2                      {
+  82   3                              ENA = 1;                //输出高电平
+  83   3                              ENB = 1;
+  84   3                      }
+  85   2                      else                      //到达了规定时间
+  86   2                      {
+  87   3                              ENA = 0;        //输出低电平
+  88   3                              ENB = 0;
+  89   3                              if(Count>=100)  //计数值到了100
+  90   3                              {
+  91   4                                      Count=0;     //计数值清零
+  92   4                              }
+  93   3                      }
+  94   2              }else if(flag == 3){                    //前进左拐
+  95   2                       Count++;           //时间计数 每1ms加一
+  96   2                       PWM_OUT2=0;
+  97   2                       PWM_OUT1=1;
+  98   2                       PWM_OUT4=0;
+  99   2                       PWM_OUT3=1;
+ 100   2                      if(Count<=pwm)    //计数时间小于规定占空比
+ 101   2                      {
+ 102   3                              ENA = 1;                //输出高电平
+ 103   3                              if(Count<=(pwm/4)){
+ 104   4                                       ENB = 1;
+ 105   4                              }else{
+ 106   4                                      ENB = 0;
+ 107   4                              }
+ 108   3                              
+ 109   3                      }
+ 110   2                      else                      //到达了规定时间
+ 111   2                      {
+ 112   3                              ENA = 0;        //输出低电平
+ 113   3                              ENB = 0;
+ 114   3                              if(Count>=100)  //计数值到了100
+ 115   3                              {
+ 116   4                                      Count=0;     //计数值清零
+ 117   4                              }
+C51 COMPILER V9.00   PWM                                                                   04/01/2020 12:41:20 PAGE 3   
+
+ 118   3                      }
+ 119   2              }else if(flag == 4){                    //前进右拐
+ 120   2                       Count++;           //时间计数 每1ms加一
+ 121   2                       PWM_OUT2=0;
+ 122   2                       PWM_OUT1=1;
+ 123   2                       PWM_OUT4=0;
+ 124   2                       PWM_OUT3=1;
+ 125   2                      if(Count<=pwm)    //计数时间小于规定占空比
+ 126   2                      {
+ 127   3                                              //输出高电平
+ 128   3                              ENB = 1;
+ 129   3                              if(Count<=(pwm/4)){
+ 130   4                                      ENA = 1;
+ 131   4                              }else{
+ 132   4                                      ENA = 0;
+ 133   4                              }
+ 134   3                      }
+ 135   2                      else                      //到达了规定时间
+ 136   2                      {
+ 137   3                              ENA = 0;        //输出低电平
+ 138   3                              ENB = 0;
+ 139   3                              if(Count>=100)  //计数值到了100
+ 140   3                              {
+ 141   4                                      Count=0;     //计数值清零
+ 142   4                              }
+ 143   3                      }
+ 144   2              }else if(flag == 5){                    //后退左拐
+ 145   2                       Count++;           //时间计数 每1ms加一
+ 146   2                       PWM_OUT1=0;
+ 147   2                       PWM_OUT2=1;
+ 148   2                       PWM_OUT4=1;
+ 149   2                       PWM_OUT3=0;
+ 150   2                      if(Count<=pwm)    //计数时间小于规定占空比
+ 151   2                      {
+ 152   3                              ENA = 1;                //输出高电平
+ 153   3                              
+ 154   3                              if(Count<=(pwm/4)){
+ 155   4                                      ENB = 1;
+ 156   4                              }else{
+ 157   4                                      ENB = 0;
+ 158   4                              }
+ 159   3                      }
+ 160   2                      else                      //到达了规定时间
+ 161   2                      {
+ 162   3                              ENA = 0;        //输出低电平
+ 163   3                              ENB = 0;
+ 164   3                              if(Count>=100)  //计数值到了100
+ 165   3                              {
+ 166   4                                              Count=0;     //计数值清零
+ 167   4                              }
+ 168   3                      }
+ 169   2              }else if(flag == 6){                    //后退右拐
+ 170   2                       Count++;           //时间计数 每1ms加一
+ 171   2                       PWM_OUT1=0;
+ 172   2                       PWM_OUT2=1;
+ 173   2                       PWM_OUT4=1;
+ 174   2                       PWM_OUT3=0;
+ 175   2                      if(Count<=pwm)    //计数时间小于规定占空比
+ 176   2                      {
+ 177   3                              ENB = 1;                //输出高电平
+ 178   3                              
+ 179   3                              if(Count<=(pwm/4)){
+C51 COMPILER V9.00   PWM                                                                   04/01/2020 12:41:20 PAGE 4   
+
+ 180   4                                      ENA = 1;
+ 181   4                              }else{
+ 182   4                                      ENA = 0;
+ 183   4                              }
+ 184   3                      }
+ 185   2                      else                      //到达了规定时间
+ 186   2                      {
+ 187   3                              ENA = 0;        //输出低电平
+ 188   3                              ENB = 0;
+ 189   3                              if(Count>=100)  //计数值到了100
+ 190   3                              {
+ 191   4                                              Count=0;     //计数值清零
+ 192   4                              }
+ 193   3                      }
+ 194   2              }
+ 195   1              
+ 196   1      }
+ 197          void chuan() interrupt 4      //串口中断
+ 198          {
+ 199   1              RI=0;   
+ 200   1              Pwmvalue=SBUF;          //接受串口发来的占空比数据
+ 201   1              if(Pwmvalue=='1'){         //前进
+ 202   2                      flag = 1;
+ 203   2                       pwmset(30);       //设置新的占空比      
+ 204   2              }else if(Pwmvalue=='0'){        //制动
+ 205   2                      flag = 0;
+ 206   2              } else if(Pwmvalue=='2'){  //后退
+ 207   2                      flag = 2;
+ 208   2                       pwmset(30);       //设置新的占空比
+ 209   2              } else if(Pwmvalue=='3'){  //前进左拐
+ 210   2                      flag = 3;
+ 211   2                       pwmset(30);       //设置新的占空比
+ 212   2              } else if(Pwmvalue=='4'){  //前进右拐
+ 213   2                      flag = 4;
+ 214   2                       pwmset(30);       //设置新的占空比
+ 215   2              }else if(Pwmvalue=='5'){  //后退
+ 216   2                      flag = 5;
+ 217   2                       pwmset(30);       //设置新的占空比
+ 218   2              }else if(Pwmvalue=='6'){  //后退
+ 219   2                      flag = 6;
+ 220   2                       pwmset(30);       //设置新的占空比
+ 221   2              }
+ 222   1              
+ 223   1              ES=0;                                           
+ 224   1              TI=1;                                           
+ 225   1              while(!TI);
+ 226   1              TI=0;
+ 227   1              ES=1;
+ 228   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    753    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
